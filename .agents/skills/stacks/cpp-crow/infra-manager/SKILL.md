@@ -136,4 +136,4 @@ CrowKit incluye un Helm Chart modular para empaquetar y desplegar servicios Crow
    - Prohibido hardcodear contraseñas, tokens JWT o claves de API en archivos `*.tf` o `values.yaml`.
    - Utilizar proveedores nativos de secretos: AWS KMS/Secrets Manager, GCP Secret Manager o Azure Key Vault (módulos incluidos en `terraform/modules/`).
 3. **Validación Pre-Push:**
-   - La ejecución de `./.agents/scripts/verify.sh --full` ejecuta automáticamente la validación de Terraform y Helm. Si alguno falla, el push está bloqueado.
+   - Ejecute las validaciones de Terraform y Helm configuradas por el proyecto. Si alguna falla, no publique los cambios.

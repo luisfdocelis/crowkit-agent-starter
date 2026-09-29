@@ -26,7 +26,7 @@ Cuando se inicie la planificación de un feature o requerimiento:
 2. **Preparación de la Rama:**
    - Para tallas **S** y **M**, la rama se crea directamente desde `development`:
      ```bash
-     ./.agents/scripts/start-branch.sh <tipo> "<nombre-corto>"
+     git switch -c <tipo>/<nombre-corto>
      ```
    - Para talla **L**, se evalúa si requiere rama documental desacoplada (`doc/`) o rama directa `feat/` según la necesidad de revisión formal previa.
 
@@ -36,7 +36,7 @@ Cuando se inicie la planificación de un feature o requerimiento:
    - Actualizar el backlog en `docs/backlog/backlog.md` indexando el nuevo plan.
 
 4. **Verificación Documental:**
-   - Validar sintaxis y enlaces con `./.agents/scripts/verify.sh --docs-only`.
+   - Validar sintaxis y enlaces con las herramientas configuradas por el proyecto.
 
 5. **Continuidad Autónoma:**
    - Una vez aprobado el diseño en la **Pausa 1**, el agente procede directamente a implementar el código C++20, pruebas unitarias y verificación sin detenerse hasta la apertura del PR y monitoreo de checks de CI.
@@ -71,7 +71,7 @@ Cuando se inicie la planificación de un feature o requerimiento:
 - **Impacto de Rollback:** Nulo / aislado al módulo modificado.
 
 ## 4. Walkthrough de Validación y Evidencias
-- [x] Compilación limpia en C++20 (`verify.sh`)
+- [x] Compilación limpia en C++20 con el sistema de build del proyecto
 - [x] Pruebas unitarias y CTest pasando al 100%
 ```
 

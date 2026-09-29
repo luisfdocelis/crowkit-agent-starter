@@ -1,11 +1,11 @@
 ---
 name: "qa-orchestrator"
-description: "Orquestador integral de Quality Assurance (QA). Coordina la pirámide de pruebas, auditoría de calidad, ejecución de Quality Gates, generación de planes de prueba y reportes de validación en CrowKit."
+description: "Orquesta QA: analiza brechas, coordina pruebas, revisiones de riesgo y reportes de calidad."
 ---
 
 # QA Orchestrator Skill — CrowKit 🦅
 
-Esta Skill actúa como el **Orquestador Central de Calidad (QA Lead & Gatekeeper)** para el proyecto **CrowKit**. Su responsabilidad es garantizar que ningún cambio de código, arquitectura o documentación se integre al repositorio sin haber superado la pirámide de pruebas y los **5 Quality Gates** institucionales.
+Esta skill coordina los controles de calidad para evitar integrar cambios que no hayan superado las pruebas y los cinco gates definidos por el proyecto.
 
 ---
 
@@ -16,7 +16,7 @@ El `qa-orchestrator` no ejecuta todas las tareas de forma monolítica; coordina 
 | Subagente Delegado | Skill / Ruta | Responsabilidad Delegada |
 | :--- | :--- | :--- |
 | **test-generator** | [skills/test-generator/SKILL.md](../test-generator/SKILL.md) | Creación de nuevas pruebas unitarias (GoogleTest), fixtures, mocks y casos borde en `libs/*/tests`. |
-| **verify-runner** | [skills/verify-runner/SKILL.md](../verify-runner/SKILL.md) | Ejecución física de scripts de validación (`verify.sh --docs-only` o `verify.sh --full`). |
+| **Verificación** | Comandos definidos por el proyecto | Ejecutar las comprobaciones locales y de CI configuradas para el repositorio. |
 | **code-review-runner** | [skills/code-review-runner/SKILL.md](../code-review-runner/SKILL.md) | Auditoría estática de código, detección de regresiones, severidad de riesgos y cobertura de rutas críticas. |
 | **bug-hunter** | [skills/bug-hunter/SKILL.md](../bug-hunter/SKILL.md) | Diagnóstico de causa raíz (RCA) cuando un test falla y diseño de la prueba de regresión previa al parche. |
 
@@ -47,11 +47,11 @@ El `qa-orchestrator` estructura la estrategia de calidad en cuatro capas progres
    - Validación de controladores y blueprints mediante `app.handle_full(req, res)`.
    - Verificación de serialización JSON (`crow::json`), códigos de estado HTTP y middlewares sin requerir apertura de puertos de red físicos.
 3. **Capa 3 — Pruebas de Contratos, Sintaxis y Documentación:**
-   - Validación OpenAPI 3.1 (`scripts/verify-openapi.sh`).
-   - Linting de plantillas Helm (`scripts/verify-helm.sh`).
-   - Formato y sintaxis de Terraform Multi-Cloud (`scripts/verify-terraform.sh`).
-   - Compilación MkDocs Material y paridad i18n (`scripts/verify-i18n.sh`).
-   - Doxygen C++20 sin errores (`scripts/verify-doxygen.sh`).
+   - Validación OpenAPI 3.1 con la herramienta configurada por el proyecto.
+   - Linting de plantillas Helm con `helm lint`, cuando se use Helm.
+   - Formato y validación de Terraform con `terraform fmt` y `terraform validate`, cuando se use Terraform.
+   - Compilación de MkDocs y comprobaciones i18n del proyecto, cuando estén configuradas.
+   - Generación de Doxygen sin errores, cuando esté configurada.
 4. **Capa 4 — Validación de Entornos y Seguridad de Contenedores:**
    - Verificación de imagen Distroless (inmunidad a shell `/bin/sh` y usuario no-root).
    - Validación de imagen Alpine Linux.
@@ -64,32 +64,20 @@ Antes de autorizar el merge de cualquier PR a `development` o `main`, se deben c
 
 | Quality Gate | Criterio de Aprobación | Script / Herramienta |
 | :--- | :--- | :--- |
-| **Gate 1: Build & Compiler Hygiene** | Compilación C++20 Release limpia con CMake sin warnings severos (`-Wall -Wextra`). | `cmake --build build` |
-| **Gate 2: Unit & Integration Suite** | 100% de las suites CTest aprobadas (311 tests existentes) sin excepciones no controladas. | `ctest --test-dir build --output-on-failure` |
-| **Gate 3: Contract & IaC Compliance** | Especificaciones OpenAPI 3.1 válidas, Helm lint exitoso y Terraform HCL formateado. | `scripts/verify-*.sh` |
-| **Gate 4: Documentation & i18n** | MkDocs compila sin errores, paridad multilingüe verificada y Doxygen generado. | `verify.sh --docs-only` |
+| **Gate 1: Build & Compiler Hygiene** | Build Release limpio con el sistema de compilación del proyecto, sin warnings críticos. | `cmake --build build` |
+| **Gate 2: Unit & Integration Suite** | Todas las suites de pruebas unitarias y de integración del proyecto pasan. | `ctest --test-dir build --output-on-failure` |
+| **Gate 3: Contract & IaC Compliance** | Especificaciones OpenAPI 3.1 válidas, Helm lint exitoso y Terraform HCL formateado. | herramientas OpenAPI, Helm y Terraform configuradas |
+| **Gate 4: Documentation & i18n** | MkDocs compila sin errores, paridad multilingüe verificada y Doxygen generado. | las comprobaciones documentales configuradas por el proyecto |
 | **Gate 5: Security & Regression Audit** | Cero hallazgos de severidad Alta en code review, blast radius controlado y memory safety. | `code-review-runner` |
 
 ---
 
 ## 🔄 Flujo de Orquestación de QA (Paso a Paso)
 
-Cuando se active el `qa-orchestrator`, debe seguirse el siguiente procedimiento:
+Siga este flujo:
 
-```mermaid
-flowchart TD
-    Start["1. Análisis de Alcance (Scoping)"] --> GapAnalysis["2. Gap Analysis (Brechas de Cobertura)"]
-    GapAnalysis --> NeedsTests{"¿Faltan Pruebas?"}
-    NeedsTests -- Sí --> InvokeTestGen["Invocar test-generator"]
-    InvokeTestGen --> ExecVerify["3. Ejecución de Verificación (verify-runner)"]
-    NeedsTests -- No --> ExecVerify
-    ExecVerify --> VerifyPass{"¿Pasan Gates 1-4?"}
-    VerifyPass -- No --> InvokeBugHunter["4. Invocar bug-hunter (RCA)"]
-    InvokeBugHunter --> FixLoop["Corregir y Reintentar"]
-    FixLoop --> ExecVerify
-    VerifyPass -- Sí --> AuditReview["5. Auditoría de Riesgo (code-review-runner)"]
-    AuditReview --> FinalVerdict["6. Emisión de Reporte y Veredicto QA"]
-```
+Flujo: analizar alcance, detectar brechas, ejecutar las comprobaciones del proyecto, corregir fallos y emitir el veredicto QA.
+
 
 ### Paso 1: Análisis de Alcance (Test Scoping)
 - Determinar si el diff actual involucra exclusivamente documentación (`--docs-only`), librerías internas (`libs/`), herramientas (`tools/`), infraestructura (`terraform/`, `templates/helm/`) o pipelines (`.github/`).
@@ -102,14 +90,10 @@ flowchart TD
 
 ### Paso 3: Ejecución de Verificación y Pruebas con `act`
 - **En Desarrollo Activo (TDD / Iteración Rápida):**
-  - Para retroalimentación en segundos, se pueden ejecutar pruebas unitarias nativas directas con CTest (`ctest -R <nombre_test>`) o la suite `./.agents/scripts/verify.sh`.
+  - Para retroalimentación en segundos, se pueden ejecutar pruebas unitarias nativas directas con CTest (`ctest -R <nombre_test>`) o los comandos de verificación documentados por el proyecto.
 - **En Quality Gate Oficial Pre-Push / Pre-PR:**
-  - **Las pruebas se ejecutan obligatoriamente mediante `act` en lugar de llamar solo a los scripts sueltos:**
-    ```bash
-    ./.agents/scripts/test-workflow-act.sh --job test
-    ```
-  - `act` emula GitHub Actions ejecutando el workflow `.github/workflows/ci.yml`, el cual se encarga de invocar y coordinar los scripts del repositorio (`verify.sh`, CMake y CTest).
-  - Si el cambio es exclusivamente documental, se ejecuta `./.agents/scripts/verify.sh --docs-only` (~10-15 segundos).
+  - Ejecute los checks requeridos por el proyecto. Si existe un workflow de GitHub Actions y `act` está instalado, puede usarlo para reproducir ese workflow localmente.
+  - Si el cambio es exclusivamente documental, se ejecutan las comprobaciones documentales del proyecto (~10-15 segundos).
 
 ### Paso 4: Triaje de Fallos y RCA (si aplica)
 - Si cualquier prueba de CTest o script de validación falla:

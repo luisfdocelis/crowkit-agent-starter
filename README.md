@@ -7,7 +7,7 @@
 A GitHub Template Repository that sets up a complete `.agents/` directory in your project with:
 
 - ✅ **Condensed AGENTS.md** — ~1 900 tokens (vs typical 5 000+)
-- ✅ **17 specialized skills** — universal + stack-specific
+- ✅ **15 specialized skills** — universal + stack-specific
 - ✅ **4 automation scripts** — token audit, skill lint, context builder, lazy loader
 - ✅ **Lazy-loaded examples** — code snippets that cost 0 tokens until needed
 - ✅ **`init.sh`** — configures the template for your specific stack in seconds

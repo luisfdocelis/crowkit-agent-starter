@@ -13,18 +13,17 @@
 #
 # Tipos de tarea disponibles:
 #   feature      → feature-planner + crow-rest-api-architecture + cpp
-#   bugfix       → bug-hunter + code-review-runner + verify-runner
-#   qa           → qa-orchestrator + test-generator + verify-runner
-#   ci           → ci-manager + verify-runner
+#   bugfix       → bug-hunter + code-review-runner
+#   qa           → qa-orchestrator + test-generator
+#   ci           → ci-manager
 #   cd           → cd-manager + infra-manager
 #   infra        → infra-manager + terraform-manager
 #   git          → git-manager
-#   docs         → docs-generator + verify-runner
+#   docs         → docs-generator
 #   crud         → crud-generator + crow-rest-api-architecture
 #   review       → code-review-runner + bug-hunter
 #   refactor     → refactor-optimizer + code-review-runner + cpp
-#   db           → db-migration-manager
-#   hotfix       → bug-hunter + verify-runner + git-manager + code-review-runner
+#   hotfix       → bug-hunter + git-manager + code-review-runner
 #   full         → Todos los skills (no recomendado)
 #
 # Opciones:
@@ -58,7 +57,7 @@ if [[ -z "$TASK_TYPE" ]]; then
   echo "Tipos disponibles:"
   echo "  feature   bugfix    qa        ci        cd"
   echo "  infra     git       docs      crud      review"
-  echo "  refactor  db        hotfix    full"
+  echo "  refactor  hotfix    full"
   echo ""
   echo "Ejemplo: $0 feature --dry-run"
   exit 1
@@ -68,19 +67,18 @@ fi
 declare -A TASK_SKILLS
 TASK_SKILLS=(
   ["feature"]="feature-planner crow-rest-api-architecture cpp"
-  ["bugfix"]="bug-hunter code-review-runner verify-runner"
-  ["qa"]="qa-orchestrator test-generator verify-runner"
-  ["ci"]="ci-manager verify-runner"
+  ["bugfix"]="bug-hunter code-review-runner"
+  ["qa"]="qa-orchestrator test-generator"
+  ["ci"]="ci-manager"
   ["cd"]="cd-manager infra-manager"
   ["infra"]="infra-manager terraform-manager"
   ["git"]="git-manager"
-  ["docs"]="docs-generator verify-runner"
+  ["docs"]="docs-generator"
   ["crud"]="crud-generator crow-rest-api-architecture"
   ["review"]="code-review-runner bug-hunter"
   ["refactor"]="refactor-optimizer code-review-runner cpp"
-  ["db"]="db-migration-manager"
-  ["hotfix"]="bug-hunter verify-runner git-manager code-review-runner"
-  ["full"]="feature-planner crow-rest-api-architecture cpp qa-orchestrator test-generator verify-runner code-review-runner bug-hunter docs-generator git-manager ci-manager cd-manager infra-manager terraform-manager refactor-optimizer db-migration-manager crud-generator cicd-architect"
+  ["hotfix"]="bug-hunter git-manager code-review-runner"
+  ["full"]=""
 )
 
 if [[ -z "${TASK_SKILLS[$TASK_TYPE]+_}" ]]; then
@@ -89,14 +87,26 @@ if [[ -z "${TASK_SKILLS[$TASK_TYPE]+_}" ]]; then
   exit 1
 fi
 
+TASK_SKILLS["full"]=$(while IFS= read -r -d '' skill_file; do basename "$(dirname "$skill_file")"; done < <(find "$SKILLS_DIR" -type f -name 'SKILL.md' -print0) | sort -u | paste -sd' ' -)
 IFS=' ' read -ra SELECTED_SKILLS <<< "${TASK_SKILLS[$TASK_TYPE]}"
+
+find_skill_file() {
+  local skill=$1 candidate
+  for candidate in "${SKILLS_DIR}/universal/${skill}/SKILL.md" "${SKILLS_DIR}/${skill}/SKILL.md"; do
+    if [[ -f "$candidate" ]]; then
+      printf '%s\n' "$candidate"
+      return 0
+    fi
+  done
+  find "$SKILLS_DIR" -type f -path "*/${skill}/SKILL.md" -print -quit
+}
 
 # ─── Calcular costo ──────────────────────────────────────────────────────────
 calc_tokens() {
   local total_bytes=0
   for skill in "${SELECTED_SKILLS[@]}"; do
-    local skill_file="${SKILLS_DIR}/universal/${skill}/SKILL.md"
-    [[ -f "$skill_file" ]] || skill_file="${SKILLS_DIR}/${skill}/SKILL.md"
+    local skill_file
+    skill_file=$(find_skill_file "$skill")
     [[ -f "$skill_file" ]] && total_bytes=$(( total_bytes + $(wc -c < "$skill_file") ))
   done
   echo "$(echo "scale=0; $total_bytes / $CHARS_PER_TOKEN" | bc)"
@@ -108,8 +118,7 @@ if [[ "$LIST_ONLY" == "true" ]]; then
   echo "   Skills seleccionados (${#SELECTED_SKILLS[@]}):"
   total_bytes=0
   for skill in "${SELECTED_SKILLS[@]}"; do
-    skill_file="${SKILLS_DIR}/universal/${skill}/SKILL.md"
-    [[ -f "$skill_file" ]] || skill_file="${SKILLS_DIR}/${skill}/SKILL.md"
+    skill_file=$(find_skill_file "$skill")
     if [[ -f "$skill_file" ]]; then
       bytes=$(wc -c < "$skill_file")
       total_bytes=$(( total_bytes + bytes ))
@@ -142,8 +151,7 @@ echo "# Generado: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
 echo ""
 
 for skill in "${SELECTED_SKILLS[@]}"; do
-  skill_file="${SKILLS_DIR}/universal/${skill}/SKILL.md"
-    [[ -f "$skill_file" ]] || skill_file="${SKILLS_DIR}/${skill}/SKILL.md"
+  skill_file=$(find_skill_file "$skill")
   if [[ -f "$skill_file" ]]; then
     echo ""
     echo "# ${SEPARATOR}"

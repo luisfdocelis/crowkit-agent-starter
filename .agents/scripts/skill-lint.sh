@@ -177,7 +177,7 @@ lint_skill() {
 
   # L006 — Bloques de código en el cuerpo
   local code_fence_count
-  code_fence_count=$(grep -c '^\`\`\`' "$skill_file" 2>/dev/null || echo 0)
+  code_fence_count=$(grep -c '^```' "$skill_file" 2>/dev/null || true)
   local code_block_count=$(( code_fence_count / 2 ))
   if [[ $code_block_count -gt $MAX_CODE_BLOCKS ]]; then
     emit_warning "L006" "${code_block_count} bloques de código → supera límite de ${MAX_CODE_BLOCKS}" \
@@ -188,7 +188,7 @@ lint_skill() {
 
   # L007 — Diagramas Mermaid
   local mermaid_count
-  mermaid_count=$(grep -c '^\`\`\`mermaid' "$skill_file" 2>/dev/null || echo 0)
+  mermaid_count=$(grep -c '^```mermaid' "$skill_file" 2>/dev/null || true)
   if [[ $mermaid_count -gt 0 ]]; then
     emit_warning "L007" "${mermaid_count} diagrama(s) Mermaid embebido(s)" \
       "Mover diagramas a resources/diagram.md o docs/ y referenciarlos con un link"
@@ -210,7 +210,7 @@ lint_skill() {
 
   # L010 — Templates embebidas
   local template_block_lines
-  template_block_lines=$(grep -c '^\(#\{1,3\} .*[Tt]emplate\|^\(```\).*markdown\)' "$skill_file" 2>/dev/null || echo 0)
+  template_block_lines=$(grep -c '^\(#\{1,3\} .*[Tt]emplate\|^\(```\).*markdown\)' "$skill_file" 2>/dev/null || true)
   if [[ $template_block_lines -gt 2 ]]; then
     emit_warning "L010" "Posibles templates/plantillas embebidas detectadas (${template_block_lines} marcadores)" \
       "Mover plantillas a templates/<nombre>.md y referenciar con: > Template: templates/<nombre>.md"
@@ -231,16 +231,16 @@ echo -e "          L006 code-blocks≤3  L007 no-mermaid  L008 filename  L009 ex
 [[ "$FIX_HINTS" == "true" ]] && echo -e "  ${CYAN}Modo: --fix-hints habilitado${NC}"
 
 if [[ -n "$TARGET_SKILL" ]]; then
-  skill_dir="${SKILLS_DIR}/${TARGET_SKILL}"
+  skill_dir=$(find "$SKILLS_DIR" -type f \( -name 'SKILL.md' -o -name 'SKILL.MD' \) -exec dirname {} \; | awk -v name="$TARGET_SKILL" -F/ '$NF == name { print; exit }')
   if [[ ! -d "$skill_dir" ]]; then
     echo -e "${RED}Error: skill '${TARGET_SKILL}' no encontrado en ${SKILLS_DIR}/${NC}"
     exit 1
   fi
   lint_skill "$skill_dir"
 else
-  while IFS= read -r -d '' skill_dir; do
-    lint_skill "$skill_dir"
-  done < <(find "$SKILLS_DIR" -mindepth 1 -maxdepth 1 -type d -print0 | sort -z)
+  while IFS= read -r -d '' skill_file; do
+    lint_skill "$(dirname "$skill_file")"
+  done < <(find "$SKILLS_DIR" -type f \( -name 'SKILL.md' -o -name 'SKILL.MD' \) -print0 | sort -z)
 fi
 
 # ─── Resumen ──────────────────────────────────────────────────────────────────

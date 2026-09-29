@@ -81,4 +81,4 @@ Desaprovisionar la infraestructura:
 ## Protocolos de Seguridad
 1. **Archivos Ignorados:** `*.tfstate`, `*.tfstate.*` y `.terraform/` NUNCA deben commitearse en el repositorio de Git.
 2. **Entorno Local Host:** En desarrollo local se utiliza el **Docker Provider** (`kreuzwerker/docker`) sobre el socket local mediante `scripts/terraform-local.sh`.
-3. **Validación Automática:** La suite de verificación de CrowKit (`./.agents/scripts/verify.sh --full`) audita automáticamente la sintaxis y formato de todos los archivos Terraform.
+3. **Validación Automática:** Ejecute las herramientas de validación de Terraform configuradas por el proyecto para revisar sintaxis y formato.

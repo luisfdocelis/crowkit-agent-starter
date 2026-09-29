@@ -95,18 +95,43 @@ if [[ "$NON_INTERACTIVE" == "false" ]]; then
 
 fi
 
+case "$STACK" in
+  cpp-crow) STACK_LABEL="C++20 + Crow Framework" ;;
+  generic)  STACK_LABEL="Generic (language-agnostic)" ;;
+  *) echo "Error: unsupported stack '$STACK' (use cpp-crow or generic)" >&2; exit 2 ;;
+esac
+case "$CI" in
+  github-actions|none) ;;
+  *) echo "Error: unsupported CI option '$CI' (use github-actions or none)" >&2; exit 2 ;;
+esac
+case "$INFRA" in
+  docker-terraform|docker|none) ;;
+  *) echo "Error: unsupported infrastructure option '$INFRA'" >&2; exit 2 ;;
+esac
+
+# Use the current directory name when a non-interactive run omits --name.
+if [[ -z "$PROJECT_NAME" ]]; then
+  PROJECT_NAME=$(basename "$(pwd)")
+fi
+if [[ "$PROJECT_NAME" == *$'\n'* ]]; then
+  echo "Error: project name must be a single line" >&2
+  exit 2
+fi
+PROJECT_NAME_ESCAPED=$(printf '%s\n' "$PROJECT_NAME" | sed 's/[\/&|\\]/\\&/g')
+
 # ─── Apply project name ───────────────────────────────────────────────────────
 echo ""
 echo -e "  ${BOLD}Configuring for: ${PROJECT_NAME}${NC}"
 
 # Replace {{PROJECT_NAME}} placeholder in AGENTS.md
 if [[ -f "${AGENTS_DIR}/AGENTS.md" ]]; then
-  sed -i "s/{{PROJECT_NAME}}/${PROJECT_NAME}/g" "${AGENTS_DIR}/AGENTS.md"
+  sed -i "s|{{PROJECT_NAME}}|${PROJECT_NAME_ESCAPED}|g" "${AGENTS_DIR}/AGENTS.md"
+  sed -i "s|{{STACK_NAME}}|${STACK_LABEL}|g" "${AGENTS_DIR}/AGENTS.md"
   echo -e "  ${GREEN}✓${NC} AGENTS.md configured"
 fi
 
 if [[ -f "${AGENTS_DIR}/WORKFLOWS.md" ]]; then
-  sed -i "s/{{PROJECT_NAME}}/${PROJECT_NAME}/g" "${AGENTS_DIR}/WORKFLOWS.md"
+  sed -i "s|{{PROJECT_NAME}}|${PROJECT_NAME_ESCAPED}|g" "${AGENTS_DIR}/WORKFLOWS.md"
 fi
 
 # ─── Apply stack ──────────────────────────────────────────────────────────────
@@ -124,6 +149,7 @@ fi
 
 # Move universal skills into .agents/skills/
 cp -r "${UNIVERSAL_DIR}/." "${SKILLS_DIR}/"
+rm -rf "$UNIVERSAL_DIR"
 echo -e "  ${GREEN}✓${NC} Universal skills installed"
 
 # Clean up stacks directory (no longer needed)
@@ -142,10 +168,8 @@ fi
 chmod +x "${AGENTS_DIR}/scripts/"*.sh 2>/dev/null || true
 echo -e "  ${GREEN}✓${NC} Scripts made executable"
 
-# ─── Update context-builder with installed skills ────────────────────────────
-# Regenerate the skill list based on what's actually installed
-INSTALLED_SKILLS=$(find "${SKILLS_DIR}" -maxdepth 1 -mindepth 1 -type d -exec basename {} \; | sort | tr '\n' ' ')
-echo -e "  ${GREEN}✓${NC} context-builder.sh updated with installed skills"
+# The context builder discovers installed skills dynamically.
+echo -e "  ${GREEN}✓${NC} Context builder will use the installed skills"
 
 # ─── Summary ─────────────────────────────────────────────────────────────────
 echo ""

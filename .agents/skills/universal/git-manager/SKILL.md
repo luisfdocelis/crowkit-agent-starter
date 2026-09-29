@@ -13,19 +13,19 @@ Esta Skill gestiona la nomenclatura semántica, el aislamiento de ramas y el pro
    Antes de crear o cambiar de rama, se debe verificar que no existan cambios pendientes o archivos no rastreados (`git status --porcelain`). Si los hay, se deben enviar a `stash` o realizar un commit parcial antes de proceder.
 
 2. **Creación Automática de Ramas:**
-   Para garantizar un repositorio limpio y seguir el flujo de desarrollo, la creación de ramas debe realizarse siempre a través de los scripts automáticos del repositorio desprendiéndose de `development`:
+   Para garantizar un repositorio limpio y seguir el flujo de desarrollo, cree la rama directamente con Git desde `development`:
    - **Bash (Linux/macOS):**
      ```bash
-     ./.agents/scripts/start-branch.sh <tipo> "<descripcion-corta>"
+     git switch -c <tipo>/<descripcion-corta>
      ```
    - **PowerShell (Windows):**
      ```powershell
-     .\.agents\scripts\start-branch.ps1 -Type <tipo> -Name "<descripcion-corta>"
+     git switch -c <tipo>/<descripcion-corta>
      ```
 
    > [!IMPORTANT]
    > **Permisos de Ejecución en Entornos de Agente / Sandbox (`BypassSandbox: true`):**
-   > Los comandos y scripts que alteran el repositorio Git (`start-branch.sh`, `pr-flow.sh`, `git checkout`, `git commit`, `git push`) requieren escribir en `.git/` y comunicarse con el remote vía red.
+   > Los comandos que alteran el repositorio Git (`git switch`, `git checkout`, `git commit`, `git push`) escriben en `.git/`; publicar ramas o administrar PRs también requiere acceso al remote.
    > Dado que el entorno sandbox estándar de Antigravity monta el subdirectorio `.git/` en modo solo lectura (`ro`) y aísla la red, **el agente debe invocar estas operaciones con `BypassSandbox: true`** (o solicitar al usuario ejecutarlas en su terminal local). De lo contrario, Git fallará con `error: cannot open '.git/FETCH_HEAD': Read-only file system` o `cannot lock ref`.
 
 3. **Nomenclatura Obligatoria de Ramas:**
@@ -64,15 +64,8 @@ Esta Skill gestiona la nomenclatura semántica, el aislamiento de ramas y el pro
 
 ### Pull Requests (PRs) y Flujo de Fusión
 
-Cuando se finalice la verificación local y el desarrollo en la rama, la publicación del Pull Request debe realizarse mediante el flujo automático:
-- **Bash (Linux/macOS):**
-  ```bash
-  ./.agents/scripts/pr-flow.sh "<titulo-pr>" "<descripcion-pr>"
-  ```
-- **PowerShell (Windows):**
-  ```powershell
-  .\.agents\scripts\pr-flow.ps1 -Title "<titulo-pr>" -Body "<descripcion-pr>"
-  ```
+Cuando se finalice la verificación local y el desarrollo en la rama, la publicación del Pull Request debe seguir el flujo configurado para el repositorio:
+Abra el PR con el proveedor de hosting configurado; si no hay uno disponible, entregue al usuario el título y el cuerpo propuestos.
 
 #### Criterios y Estructura del Pull Request:
 - **Título del PR:** Debe seguir el formato `prefijo(scope): breve descripcion` (ej. `feat(auth): add jwt token validation`).

@@ -7,7 +7,7 @@
 ## 📌 Project Context
 
 - **Project:** {{PROJECT_NAME}}
-- **Stack:** *(configured by init.sh)*
+- **Stack:** {{STACK_NAME}}
 - **Key dirs:** `src/` · `tests/` · `docs/` · `.agents/`
 - **Doc refs:** `docs/backlog/` · `docs/roadmap/` · `docs/features/` · `docs/plans/` · `docs/reports/`
 
@@ -46,13 +46,13 @@
 **⏸️ PAUSE 1** — Before coding: present size, scope, and design. Wait for user approval.
 
 **Autonomous loop (no interruptions):**
-1. Create branch → `start-branch.sh <type> "<name>"`
+1. Create branch → `git switch -c <type>/<name>`
 2. Write technical docs (per S/M/L)
 3. Implement code (SOLID, clean architecture)
 4. Write tests
-5. Run `verify.sh` (build + tests + quality gates)
+5. Run the project's documented build, tests, and quality checks
 6. Update `docs/backlog/` and `docs/reports/`
-7. Push + PR
+7. Push the branch and open a PR with the configured hosting provider
 8. Monitor CI
 
 **🛑 PAUSE 2 [MANDATORY]** — Green checks: present summary and wait for explicit merge confirmation. **NEVER merge autonomously.**
@@ -68,7 +68,7 @@ After merge: `git checkout main && git pull origin main`
 **Rules before modifying code:**
 1. Define size (S/M/L) and required docs.
 2. Confirm scope with user (Pause 1).
-3. Create branch with `start-branch.sh` — verify it is NOT `main` or `development`.
+3. Create the branch with `git switch -c <type>/<name>` — verify it is NOT `main` or `development`.
 
 > [!IMPORTANT]
 > The agent **NEVER** merges autonomously. Always wait for explicit user confirmation.
@@ -78,8 +78,6 @@ After merge: `git checkout main && git pull origin main`
 ## 🏷️ Chat Naming
 
 Format: `[Phase] - [Version] - [EPIC] - [TASK-ID]: [Title]`
-
-Sync with: `./.agents/scripts/sync-chat-name.sh "<Title>"`
 
 ---
 
@@ -118,5 +116,4 @@ Sync with: `./.agents/scripts/sync-chat-name.sh "<Title>"`
 ./.agents/scripts/skill-lint.sh [<skill>] [--fix-hints] # SKILL.md linter
 ./.agents/scripts/context-builder.sh <task> [--list]  # minimal context by task
 ./.agents/scripts/lazy-skill.sh <name> [--info]       # load skill on demand
-./.agents/scripts/sync-chat-name.sh "<Title>"         # persist chat name
 ```

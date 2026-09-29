@@ -106,9 +106,9 @@ print_file_row() {
   if [[ "$VERBOSE" == "true" ]]; then
     # Detectar bloques de código largos (> 20 líneas)
     local code_blocks
-    code_blocks=$(grep -c '^\`\`\`' "$file" 2>/dev/null || echo 0)
+    code_blocks=$(grep -c '^```' "$file" 2>/dev/null || true)
     local mermaid_blocks
-    mermaid_blocks=$(grep -c '^\`\`\`mermaid' "$file" 2>/dev/null || echo 0)
+    mermaid_blocks=$(grep -c '^```mermaid' "$file" 2>/dev/null || true)
     if [[ $code_blocks -gt 4 ]]; then
       printf "    ${CYAN}→ Bloques de código: %d  (considera moverlos a examples/)${NC}\n" \
         "$(( code_blocks / 2 ))"

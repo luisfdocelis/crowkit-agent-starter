@@ -84,7 +84,7 @@ if [[ "$LIST_ALL" == "true" ]]; then
       [[ -d "${skill_dir}/references" ]] && extras+="references/ "
       printf "  %-36s %6d  %5d  %s\n" "$name" "$bytes" "$tokens" "$extras"
     fi
-  done < <(find "$SKILLS_DIR" -mindepth 1 -maxdepth 1 -type d -print0 | sort -z)
+  done < <(find "$SKILLS_DIR" -type f \( -name 'SKILL.md' -o -name 'SKILL.MD' \) -print0 | sort -z | while IFS= read -r -d '' skill_file; do dirname "$skill_file"; done | sort -u | while IFS= read -r skill_dir; do printf '%s\0' "$skill_dir"; done)
   echo ""
   echo -e "  ${CYAN}Uso: $0 <skill-name>                    → cargar SKILL.md${NC}"
   echo -e "  ${CYAN}     $0 <skill-name> --example <file>   → cargar examples/<file>${NC}"
@@ -100,10 +100,10 @@ if [[ -z "$SKILL_NAME" ]]; then
   exit 1
 fi
 
-SKILL_DIR="${SKILLS_DIR}/${SKILL_NAME}"
-if [[ ! -d "$SKILL_DIR" ]]; then
-  # Intentar búsqueda parcial
-  MATCH=$(find "$SKILLS_DIR" -mindepth 1 -maxdepth 1 -type d -name "*${SKILL_NAME}*" | head -1 || true)
+SKILL_DIR=$(find "$SKILLS_DIR" -type d -name "$SKILL_NAME" -print -quit)
+if [[ -z "$SKILL_DIR" ]]; then
+  # Intentar búsqueda parcial dentro del árbol de skills.
+  MATCH=$(find "$SKILLS_DIR" -type d -name "*${SKILL_NAME}*" -print -quit || true)
   if [[ -n "$MATCH" ]]; then
     echo -e "${YELLOW}⚠️  Skill '${SKILL_NAME}' no encontrado exactamente. ¿Quisiste decir '$(basename "$MATCH")'?${NC}" >&2
     SKILL_DIR="$MATCH"

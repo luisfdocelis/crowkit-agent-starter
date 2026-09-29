@@ -24,8 +24,8 @@ Esta Skill gobierna, optimiza y audita los flujos de **Continuous Integration (C
    - Reducción de tiempos de build mediante claves basadas en el hash de los archivos `**/CMakeLists.txt`.
 4. **Validación Local con `act`:**
    - Emulación de GitHub Actions en local mediante Docker y `act` antes de realizar push remoto.
-   - Emulación de GitHub Actions en local mediante Docker y `act` antes de realizar push remoto (`./.agents/scripts/test-workflow-act.sh`).
-   - Los workflows invocan directamente los scripts del repositorio (`verify.sh`, `scripts/verify-*.sh`) garantizando paridad del 100% entre local y remoto.
+   - Emulación opcional de GitHub Actions en local con Docker y `act`, si ambos están instalados.
+   - Configure los workflows para ejecutar los mismos comandos de validación documentados por el proyecto, tanto en local como en CI.
 5. **Monitoreo de Checks de PR:**
    - Seguimiento automatizado del estado de los checks con `gh pr checks --watch`.
 
@@ -66,15 +66,11 @@ act pull_request -n
 ### 2. Ejecución Local del Job de Linux (`test`)
 Ejecuta el job `test` dentro del entorno containerizado oficial de Ubuntu:
 ```bash
-# En Linux / macOS
-./.agents/scripts/test-workflow-act.sh --job test
-
-# En Windows (PowerShell)
-.\.agents\scripts\test-workflow-act.ps1 -Job test
+act --job test
 ```
 
 > [!TIP]
-> Si Docker no tiene configurado el socket por defecto, el script detecta automáticamente sockets alternativos como `$HOME/.docker/desktop/docker.sock` o sockets de usuario systemd (`/run/user/$UID/docker.sock`).
+> Configure Docker y `act` según el entorno local antes de ejecutar el workflow.
 
 ---
 
@@ -92,5 +88,5 @@ Ejecuta el job `test` dentro del entorno containerizado oficial de Ubuntu:
    - Si un check falla en GitHub Actions:
      1. Usar `gh pr checks` para identificar el job fallido.
      2. Inspeccionar el log exacto con `gh run view --log-failed`.
-     3. Reproducir el fallo localmente con `verify.sh` o `act`.
+     3. Reproducir el fallo con los comandos de validación del proyecto o con `act`.
      4. Aplicar la corrección antes de solicitar nuevamente revisión.
